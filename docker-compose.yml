@@ -1,0 +1,46 @@
+services:
+
+  postgres:
+    image: postgres:17
+    container_name: northwind-postgres
+    environment:
+      POSTGRES_DB: northwind
+      POSTGRES_USER: northwind
+      POSTGRES_PASSWORD: northwind
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: data-lake
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  jupyter:
+    image: quay.io/jupyter/pyspark-notebook:latest
+    container_name: data-engineering-lab
+    ports:
+      - "8888:8888"
+      - "4040:4040"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./src:/home/jovyan/work/src
+      - ./data:/home/jovyan/work/data
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+    depends_on:
+      - postgres
+      - minio
+
+volumes:
+  postgres_data:
+  minio_data:
